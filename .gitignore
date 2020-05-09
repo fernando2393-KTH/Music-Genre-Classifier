@@ -591,3 +591,8 @@ Temporary Items
 Datasets/*
 
 # End of https://www.gitignore.io/api/python,pycharm,visualstudio,jupyternotebooks
+.idea/DT2119-Final-Project-.iml
+.idea/inspectionProfiles/
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
