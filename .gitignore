@@ -587,10 +587,6 @@ Temporary Items
 .apdisk
 
 ### Datasets
-Datasets/fma_reduced/*
-Datasets/fma_metadata/checksums
-Datasets/fma_metadata/genres.csv
-Datasets/fma_metadata/tracks.csv
-Datasets/.ipynb_checkpoints/*
+Datasets/*
 
 # End of https://www.gitignore.io/api/python,pycharm,visualstudio,jupyternotebooks
