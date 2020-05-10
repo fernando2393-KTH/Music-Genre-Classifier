@@ -5,7 +5,7 @@ note: Check https://nbviewer.jupyter.org/github/mdeff/fma/blob/outputs/usage.ipy
 """
 
 import pandas as pd
-import mfcc
+import features
 import constants as cts
 from pathlib import Path
 
@@ -15,16 +15,6 @@ class Loader:
         self.features = ['mfcc', 'chroma_cens', 'tonnetz', 'spectral_contrast',
                          ['spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff'],
                          ['rmse', 'zcr']]  # Main categories of the stored features
-
-    @staticmethod
-    def load_features():
-        """
-        This method loads the data features from the .csv file.
-        :return features of the data.
-        """
-        features = pd.read_csv(cts.METADATA + "features.csv", index_col=0, header=[0, 1, 2])
-
-        return features
 
     @staticmethod
     def load_echonest():
@@ -61,11 +51,18 @@ class Loader:
         return tracks
 
     @staticmethod
-    def load_mfcc():
-        if not Path(cts.MFCC).is_file():  # Check if the file exists
-            compute_mfcc = mfcc.MfccComputation()
-            compute_mfcc.preprocessing()  # If the file does not exist, create it
-        mfcc_val = pd.read_pickle(cts.MFCC)
+    def load_features(mode):
+        if mode == 'spectrogram':
+            if not Path(cts.SPECTROGRAM).is_file():  # Check if the file exists
+                compute_ = features.FeatureComputation()
+                compute_.preprocessing(mode)  # If the file does not exist, create it
+            mfcc_val = pd.read_pickle(cts.SPECTROGRAM)
+
+        else:
+            if not Path(cts.MFCC).is_file():  # Check if the file exists
+                compute_ = features.FeatureComputation()
+                compute_.preprocessing(mode)  # If the file does not exist, create it
+            mfcc_val = pd.read_pickle(cts.MFCC)
 
         return mfcc_val
 
@@ -87,12 +84,13 @@ class Loader:
         return y_train, y_val, y_test
 
 
-def get_train_val_test():
+def get_train_val_test(mode='spectrogram'):
     """
     :return training, validation and test datasets.
     """
     loader = Loader()
-    mfcc_ = loader.load_mfcc()  # Load the mfcc datagrame of the dataset songs.
+    print("Calculating " + mode + "...")
+    mfcc_ = loader.load_features(mode)  # Load the features dataframe of the dataset songs.
     tracks = loader.load_tracks()  # Load all the tracks of the big dataset.
     y_train, y_val, y_test = loader.get_targets(tracks)  # Load the target values of all the tracks.
     # Get training mfcc and labels dataframes.
@@ -111,9 +109,9 @@ def get_train_val_test():
     y_test = y_test[y_test.notna()]
     mfcc_test = mfcc_test.loc[mfcc_test['track'].isin(y_test.index[:].tolist())]
     # Get the mfcc values and convert them to numpy arrays.
-    x_train = mfcc_train['mfcc'].to_numpy()
-    x_val = mfcc_val['mfcc'].to_numpy()
-    x_test = mfcc_test['mfcc'].to_numpy()
+    x_train = mfcc_train[mode].to_numpy()
+    x_val = mfcc_val[mode].to_numpy()
+    x_test = mfcc_test[mode].to_numpy()
     # Conver the target values to numpy arrays.
     y_train = y_train.to_numpy()
     y_val = y_val.to_numpy()

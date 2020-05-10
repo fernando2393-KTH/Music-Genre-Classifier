@@ -8,24 +8,31 @@ import warnings
 import constants as cts
 
 
-def compute_mfcc(filepath):
+def compute_feature(mode, filepath):
     """
     This method loads the a music track and computes the mfcc.
+    :param mode: allows to get either spectrogram or mfcc.
     :param filepath: music track.
     :return mfcc of the data track.
     """
     y, sr = librosa.load(filepath, duration=28.5, sr=44100, mono=True, offset=0.5)  # Load 28 seconds
     # (same length for every track)
+    if mode == 'spectrogram':
+        spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128)
+        spectrogram = sklearn.preprocessing.scale(spectrogram, axis=1)  # Normalize spectrogram to have mean 0 and std 1
+
+        return spectrogram
+
     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
     mfcc = sklearn.preprocessing.scale(mfcc, axis=1)  # Normalize mfcc to have mean 0 and std 1
 
     return mfcc
 
 
-class MfccComputation:
+class FeatureComputation:
 
     @staticmethod
-    def preprocessing():
+    def preprocessing(mode):
         """
         This method parses the data files, calls compute_mfcc and save them into a .csv file.
         """
@@ -34,7 +41,7 @@ class MfccComputation:
         if '.DS_Store' in folders:  # MacOS file system check
             folders.remove('.DS_Store')
         folders.sort()
-        mfcc_dict = {}
+        feature_dict = {}
         for foldername in tqdm(folders):
             files = os.listdir(cts.DATASETS + foldername)
             if '.DS_Store' in files:  # MacOS file system check
@@ -44,9 +51,12 @@ class MfccComputation:
                 if os.path.isdir(cts.DATASETS + foldername):
                     key = file.strip('0')
                     key = key.replace('.mp3', '')
-                    mfcc = compute_mfcc(cts.DATASETS + foldername + '/' + file)
-                    mfcc_dict[int(key)] = mfcc
+                    feature = compute_feature(mode, cts.DATASETS + foldername + '/' + file)
+                    feature_dict[int(key)] = feature
 
-        df = pd.DataFrame(list(mfcc_dict.items()), columns=['track', 'mfcc']).astype(object)
-        df.to_pickle(cts.MFCC)
+        df = pd.DataFrame(list(feature_dict.items()), columns=['track', mode]).astype(object)
+        if mode == 'spectrogram':
+            df.to_pickle(cts.SPECTROGRAM)
+        else:
+            df.to_pickle(cts.MFCC)
 
