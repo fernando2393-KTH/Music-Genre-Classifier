@@ -37,13 +37,15 @@ class MfccComputation:
         mfcc_dict = {}
         for foldername in tqdm(folders):
             files = os.listdir(cts.DATASETS + foldername)
+            if '.DS_Store' in files:  # MacOS file system check
+                files.remove('.DS_Store')
             files.sort()
             for file in files:
                 if os.path.isdir(cts.DATASETS + foldername):
                     key = file.strip('0')
                     key = key.replace('.mp3', '')
                     mfcc = compute_mfcc(cts.DATASETS + foldername + '/' + file)
-                    mfcc_dict[key] = mfcc
+                    mfcc_dict[int(key)] = mfcc
 
         df = pd.DataFrame(list(mfcc_dict.items()), columns=['track', 'mfcc']).astype(object)
         df.to_pickle(cts.MFCC)

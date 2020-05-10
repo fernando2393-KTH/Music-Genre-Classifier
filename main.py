@@ -1,12 +1,11 @@
-import loader as ld
+import loader
 
 
 def main():
-    loader = ld.Loader()
-    mfcc = loader.load_mfcc()
-    # tracks = loader.load_tracks()
-    # features = loader.load_features()
-    # (x_train, y_train), (x_val, y_val), (x_test, y_test) = loader.split_dataset(tracks, features)
+    (x_train, y_train), (x_val, y_val), (x_test, y_test) = loader.get_train_val_test()
+    print("There are the following classes:")
+    classes = set(y_train.tolist()) & set(y_val.tolist()) & set(y_test.tolist())
+    print(classes)
 
 
 if __name__ == "__main__":
