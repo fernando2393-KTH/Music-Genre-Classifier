@@ -6,6 +6,8 @@ import os
 from tqdm import tqdm
 import warnings
 import constants as cts
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def compute_feature(mode, filepath):
@@ -15,14 +17,17 @@ def compute_feature(mode, filepath):
     :param filepath: music track.
     :return mfcc of the data track.
     """
+    if mode == 'spectrogram':
+        y, sr = librosa.load(filepath, duration=28.5, sr=44100, mono=True, offset=0.5)  # Load 28 seconds
+        # (same length for every track)
+        stft = np.abs(librosa.stft(y, n_fft=2048, hop_length=1024))
+        mel = librosa.feature.melspectrogram(sr=sr, S=stft ** 2)
+        log_mel = librosa.power_to_db(mel, ref=np.max)
+
+        return log_mel
+
     y, sr = librosa.load(filepath, duration=28.5, sr=44100, mono=True, offset=0.5)  # Load 28 seconds
     # (same length for every track)
-    if mode == 'spectrogram':
-        spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128)
-        spectrogram = sklearn.preprocessing.scale(spectrogram, axis=1)  # Normalize spectrogram to have mean 0 and std 1
-
-        return spectrogram
-
     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
     mfcc = sklearn.preprocessing.scale(mfcc, axis=1)  # Normalize mfcc to have mean 0 and std 1
 
