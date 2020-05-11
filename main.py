@@ -6,7 +6,6 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
-from tqdm import tqdm
 
 
 class Classifier:
@@ -36,28 +35,17 @@ class Classifier:
 
 
 def main():
-    (x_train_prev, y_train), (x_val_prev, y_val), (x_test_prev, y_test) = loader.get_train_val_test(mode='spectrogram')
+    (x_train, y_train), (x_val, y_val), (x_test, y_test) = loader.get_train_val_test(mode='spectrogram')
     print("There are the following classes:")
     classes = set(y_train.tolist()) & set(y_val.tolist()) & set(y_test.tolist())
     print(classes)
 
     # Remove small samples
-    x_train_prev = np.delete(x_train_prev, [3495, 3496, 3497])
+    x_train = np.delete(x_train, [3495, 3496, 3497])
     y_train = np.delete(y_train, [3495, 3496, 3497])
-
-    x_train = np.zeros((x_train_prev.shape[0], x_train_prev[0].shape[0], x_train_prev[0].shape[1]))
-    x_val = np.zeros((x_val_prev.shape[0], x_val_prev[0].shape[0], x_val_prev[0].shape[1]))
-    x_test = np.zeros((x_test_prev.shape[0], x_test_prev[0].shape[0], x_test_prev[0].shape[1]))
-    for i in tqdm(range(x_train_prev.shape[0])):
-        x_train[i] = x_train_prev[i]
-    del x_train_prev
-    for i in tqdm(range(x_val_prev.shape[0])):
-        x_val[i] = x_val_prev[i]
-    del x_val_prev
-    for i in tqdm(range(x_test_prev.shape[0])):
-        x_test[i] = x_test_prev[i]
-    del x_test_prev
-
+    x_train = np.rollaxis(np.dstack(x_train), -1)
+    x_val = np.rollaxis(np.dstack(x_val), -1)
+    x_test = np.rollaxis(np.dstack(x_test), -1)
     x_train = np.expand_dims(x_train, axis=3)
     x_val = np.expand_dims(x_val, axis=3)
     x_test = np.expand_dims(x_test, axis=3)
@@ -73,8 +61,8 @@ def main():
     y_test = to_categorical(y_test, num_classes=8)
 
     # Training parameters
-    epochs = 25
-    lr = 0.005
+    epochs = 25  # Train for 25 epochs
+    lr = 0.005  # Initial learning rate
     batch_size = 16
 
     inputs = tf.keras.Input(shape=x_train.shape[1:])

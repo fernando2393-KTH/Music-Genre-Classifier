@@ -7,7 +7,6 @@ from tqdm import tqdm
 import warnings
 import constants as cts
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def compute_feature(mode, filepath):
@@ -18,10 +17,10 @@ def compute_feature(mode, filepath):
     :return mfcc of the data track.
     """
     if mode == 'spectrogram':
-        y, sr = librosa.load(filepath, duration=28.5, sr=44100, mono=True, offset=0.5)  # Load 28 seconds
+        y, sr = librosa.load(filepath, duration=10.5, sr=44100, mono=True, offset=0.5)  # Load 10 seconds
         # (same length for every track)
-        stft = np.abs(librosa.stft(y, n_fft=2048, hop_length=1024))
-        mel = librosa.feature.melspectrogram(sr=sr, S=stft ** 2)
+        stft = np.abs(librosa.stft(y, n_fft=2048, hop_length=512))
+        mel = librosa.feature.melspectrogram(n_mels=64, sr=sr, S=stft ** 2)
         log_mel = librosa.power_to_db(mel, ref=np.max)
 
         return log_mel
