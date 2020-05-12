@@ -1,11 +1,10 @@
 import loader
 import numpy as np
 import tensorflow as tf
-import keras
 import matplotlib.pyplot as plt
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 
@@ -29,54 +28,33 @@ def plot_history(history):
     plt.show()
 
 
+def conv_layer(inputs, filters, kernel_size, pool_size):
+    x = Conv1D(filters, kernel_size)(inputs)
+    x = tf.nn.relu(x)
+    x = MaxPooling1D(pool_size=pool_size, padding='same')(x)
+    x = tf.keras.layers.BatchNormalization()(x)
+    x = Dropout(0.4)(x)
+
+    return x
+
+
 class Classifier:
 
     @staticmethod
-    def build(inputs, classes):
-
-        x = Conv2D(16, (3, 3), strides=(1, 1))(inputs)
-        x = tf.nn.relu(x)
-        x = MaxPooling2D(pool_size=(2, 2), strides=(1, 1))(x)
-
-        x = Conv2D(32, (3, 3), strides=(1, 1))(x)
-        x = tf.nn.relu(x)
-        x = MaxPooling2D(pool_size=(2, 2), strides=(1, 1))(x)
-
-        x = Conv2D(64, (3, 3), strides=(1, 1))(x)
-        x = tf.nn.relu(x)
-        x = MaxPooling2D(pool_size=(2, 2), strides=(1, 1))(x)
-        x = Dropout(rate=0.1, trainable=True)(x)
-
+    def build(inputs, classes, layers, filters, kernel_size, pool_size):
+        # Convolutional layers
+        x = inputs
+        for i in range(layers):
+            x = conv_layer(x, filters[i], kernel_size[i], pool_size[i])
+        x = tf.keras.layers.LSTM(96, return_sequences=False)(x)
+        x = Dropout(0.4)(x)
+        # Final layer
         x = Flatten()(x)
-        x = Dense(64, activation='relu')(x)
-        x = Dropout(rate=0.3, trainable=True)(x)
+        x = Dense(64, kernel_regularizer=tf.keras.regularizers.l2(), activation='relu')(x)
+        x = Dropout(rate=0.4, trainable=True)(x)
         outputs = Dense(classes, activation='softmax')(x)
 
         return tf.keras.Model(inputs=inputs, outputs=outputs)
-
-
-def build_model(input_shape):
-    model = keras.Sequential()
-    # 1st conv layer
-    model.add(keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape))
-    model.add(keras.layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same'))
-    model.add(keras.layers.BatchNormalization())
-    # 2nd conv layer
-    model.add(keras.layers.Conv2D(32, (3, 3), activation='relu'))
-    model.add(keras.layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same'))
-    model.add(keras.layers.BatchNormalization())
-    # 3rd conv layer
-    model.add(keras.layers.Conv2D(32, (2, 2), activation='relu'))
-    model.add(keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'))
-    model.add(keras.layers.BatchNormalization())
-    # flatten output and feed it into dense layer
-    model.add(keras.layers.Flatten())
-    model.add(keras.layers.Dense(64, activation='relu'))
-    model.add(keras.layers.Dropout(0.3))
-    # output layer
-    model.add(keras.layers.Dense(10, activation='softmax'))
-
-    return model
 
 
 def predict(model, x, y):
@@ -97,9 +75,9 @@ def main():
     x_train = np.rollaxis(np.dstack(x_train), -1)
     x_val = np.rollaxis(np.dstack(x_val), -1)
     x_test = np.rollaxis(np.dstack(x_test), -1)
-    x_train = np.expand_dims(x_train, axis=3)
-    x_val = np.expand_dims(x_val, axis=3)
-    x_test = np.expand_dims(x_test, axis=3)
+    # x_train = np.expand_dims(x_train, axis=3)
+    # x_val = np.expand_dims(x_val, axis=3)
+    # x_test = np.expand_dims(x_test, axis=3)
 
     # One-hot encoding of classes
     dict_labels = {'Electronic': 0, 'Experimental': 1, 'Folk': 2, 'Hip-Hop': 3,
@@ -107,45 +85,49 @@ def main():
     y_train = [dict_labels[y_train[i]] for i in range(y_train.shape[0])]
     y_val = [dict_labels[y_val[i]] for i in range(y_val.shape[0])]
     y_test = [dict_labels[y_test[i]] for i in range(y_test.shape[0])]
-    # y_train = to_categorical(y_train, num_classes=8)
-    # y_val = to_categorical(y_val, num_classes=8)
-    # y_test = to_categorical(y_test, num_classes=8)
+    y_train = to_categorical(y_train, num_classes=8)
+    y_val = to_categorical(y_val, num_classes=8)
+    y_test = to_categorical(y_test, num_classes=8)
 
     # Training parameters
-    # epochs = 25  # Train for 25 epochs
-    # lr = 0.005  # Initial learning rate
+    epochs = 50  # Train for 30 epochs
+    lr = 0.001  # Initial learning rate
     batch_size = 16
+    tf.random.set_seed(1234)
 
-    # inputs = tf.keras.Input(shape=x_train.shape[1:])
-    # model = Classifier.build(inputs, classes=8)
-    # print("Summary:")
-    # print(model.summary())
-    #
-    # opt = Adam(lr=lr, decay=lr / epochs)
-    # model.compile(loss="binary_crossentropy", optimizer=opt, metrics=["accuracy"])
-    # # Callbacks: early stopping and checkpoint
-    # early_stopping = EarlyStopping(monitor='val_accuracy', verbose=1,
-    #                                patience=10,
-    #                                mode='max',
-    #                                restore_best_weights=True)
-    # filepath = "weights.{epoch:02d}-{val_accuracy:.2f}.hdf5"
-    # checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1,
-    #                              save_best_only=True, mode='max')
-    # callbacks_list = [early_stopping, checkpoint]
-    # history = model.fit(x_train, y_train, batch_size=batch_size,
-    #                     validation_data=(x_val, y_val),
-    #                     steps_per_epoch=len(x_train) // batch_size,
-    #                     callbacks=callbacks_list,
-    #                     epochs=epochs, verbose=1)
+    inputs = tf.keras.Input(shape=x_train.shape[1:])
+    layers = 3
+    filters = [56, 56, 56]
+    kernel_size = [5, 5, 5]
+    pool_size = [2, 2, 2]
+    model = Classifier.build(inputs, 8, layers, filters, kernel_size, pool_size)
+    print("Summary:")
+    print(model.summary())
 
-    model = build_model(x_train.shape[1:])
-    optimizer = keras.optimizers.Adam(learning_rate=0.0001)
-    model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    model.summary()
-
-    history = model.fit(x_train, y_train,
+    opt = Adam(learning_rate=lr)
+    model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
+    # Callbacks: early stopping and checkpoint
+    early_stopping = EarlyStopping(monitor='val_accuracy', verbose=1,
+                                   patience=10,
+                                   mode='max',
+                                   restore_best_weights=True)
+    filepath = "weights.{epoch:02d}-{val_accuracy:.2f}.hdf5"
+    checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1,
+                                 save_best_only=True, mode='max')
+    callbacks_list = [checkpoint, early_stopping]
+    history = model.fit(x_train, y_train, batch_size=batch_size,
                         validation_data=(x_val, y_val),
-                        batch_size=batch_size, epochs=30)
+                        callbacks=callbacks_list,
+                        epochs=epochs, verbose=1)
+
+    # model = build_model(x_train.shape[1:])
+    # optimizer = keras.optimizers.Adam(learning_rate=0.0001)
+    # model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    # model.summary()
+    #
+    # history = model.fit(x_train, y_train,
+    #                     validation_data=(x_val, y_val),
+    #                     batch_size=batch_size, epochs=30)
 
     plot_history(history)
 
@@ -155,8 +137,8 @@ def main():
     print("Test loss:", results[0])
     print("Test acc:", results[1])
 
-    test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
-    print('\nTest accuracy:', test_acc)
+    # test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
+    # print('\nTest accuracy:', test_acc)
 
 
 if __name__ == "__main__":

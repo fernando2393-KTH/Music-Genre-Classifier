@@ -84,6 +84,15 @@ class Loader:
         return y_train, y_val, y_test
 
 
+def process_data(mfcc_, y):
+    mfcc = mfcc_.loc[mfcc_['track'].isin(y.index[:].tolist())]
+    y = y[mfcc['track'].to_numpy()]
+    y = y[y.notna()]
+    mfcc_train = mfcc.loc[mfcc['track'].isin(y.index[:].tolist())]
+
+    return mfcc, y
+
+
 def get_train_val_test(mode='spectrogram'):
     """
     :return training, validation and test datasets.
@@ -94,20 +103,11 @@ def get_train_val_test(mode='spectrogram'):
     tracks = loader.load_tracks()  # Load all the tracks of the big dataset.
     y_train, y_val, y_test = loader.get_targets(tracks)  # Load the target values of all the tracks.
     # Get training mfcc and labels dataframes.
-    mfcc_train = mfcc_.loc[mfcc_['track'].isin(y_train.index[:].tolist())]
-    y_train = y_train[mfcc_train['track'].to_numpy()]
-    y_train = y_train[y_train.notna()]
-    mfcc_train = mfcc_train.loc[mfcc_train['track'].isin(y_train.index[:].tolist())]
+    mfcc_train, y_train = process_data(mfcc_, y_train)
     # Get validation mfcc and labels dataframes.
-    mfcc_val = mfcc_.loc[mfcc_['track'].isin(y_val.index[:].tolist())]
-    y_val = y_val[mfcc_val['track'].to_numpy()]
-    y_val = y_val[y_val.notna()]
-    mfcc_val = mfcc_val.loc[mfcc_val['track'].isin(y_val.index[:].tolist())]
+    mfcc_val, y_val = process_data(mfcc_, y_val)
     # Get testing mfcc and labels dataframes.
-    mfcc_test = mfcc_.loc[mfcc_['track'].isin(y_test.index[:].tolist())]
-    y_test = y_test[mfcc_test['track'].to_numpy()]
-    y_test = y_test[y_test.notna()]
-    mfcc_test = mfcc_test.loc[mfcc_test['track'].isin(y_test.index[:].tolist())]
+    mfcc_test, y_test = process_data(mfcc_, y_test)
     # Get the mfcc values and convert them to numpy arrays.
     x_train = mfcc_train[mode].to_numpy()
     x_val = mfcc_val[mode].to_numpy()
