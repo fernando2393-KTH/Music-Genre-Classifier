@@ -61,11 +61,32 @@ class Loader:
         return tracks
 
     @staticmethod
+<<<<<<< Updated upstream
     def load_mfcc():
         if not Path(cts.MFCC).is_file():  # Check if the file exists
             compute_mfcc = mfcc.MfccComputation()
             compute_mfcc.preprocessing()  # If the file does not exist, create it
         mfcc_val = pd.read_pickle(cts.MFCC)
+=======
+    def load_features(mode):
+        if mode == 'spectrogram':
+            if cts.AUGMENT:
+                if not Path(cts.SPECTROGRAM_AUGMENT).is_file():  # Check if the file exists
+                    compute_ = features.FeatureComputation()
+                    compute_.preprocessing(mode)  # If the file does not exist, create it
+                mfcc_val = pd.read_pickle(cts.SPECTROGRAM_AUGMENT)
+            else: 
+                if not Path(cts.SPECTROGRAM).is_file():  # Check if the file exists
+                    compute_ = features.FeatureComputation()
+                    compute_.preprocessing(mode)  # If the file does not exist, create it
+                mfcc_val = pd.read_pickle(cts.SPECTROGRAM)
+
+        else:
+            if not Path(cts.MFCC).is_file():  # Check if the file exists
+                compute_ = features.FeatureComputation()
+                compute_.preprocessing(mode)  # If the file does not exist, create it
+            mfcc_val = pd.read_pickle(cts.MFCC)
+>>>>>>> Stashed changes
 
         return mfcc_val
 
