@@ -51,20 +51,25 @@ class Loader:
         return tracks
 
     @staticmethod
-    def load_features(mode):
+    def load_features(mode, filename):
         if mode == 'spectrogram':
+            if Path("Datasets/" + filename + ".csv").is_file():  # Check if specific data exists
+                spectrogram = pd.read_pickle("Datasets/" + filename + ".csv")
+
+                return spectrogram
             if not Path(cts.SPECTROGRAM).is_file():  # Check if the file exists
                 compute_ = features.FeatureComputation()
                 compute_.preprocessing(mode)  # If the file does not exist, create it
-            mfcc_val = pd.read_pickle(cts.SPECTROGRAM)
+            spectrogram = pd.read_pickle(cts.SPECTROGRAM)
 
+            return spectrogram
         else:
             if not Path(cts.MFCC).is_file():  # Check if the file exists
                 compute_ = features.FeatureComputation()
                 compute_.preprocessing(mode)  # If the file does not exist, create it
-            mfcc_val = pd.read_pickle(cts.MFCC)
+            mfcc = pd.read_pickle(cts.MFCC)
 
-        return mfcc_val
+            return mfcc
 
     @staticmethod
     def get_targets(tracks):
@@ -90,16 +95,16 @@ def process_data(mfcc_, y):
     y = y[y.notna()]
     mfcc_train = mfcc.loc[mfcc['track'].isin(y.index[:].tolist())]
 
-    return mfcc, y
+    return mfcc_train, y
 
 
-def get_train_val_test(mode='spectrogram'):
+def get_train_val_test(mode='spectrogram', filename=""):
     """
     :return training, validation and test datasets.
     """
     loader = Loader()
     print("Calculating " + mode + "...")
-    mfcc_ = loader.load_features(mode)  # Load the features dataframe of the dataset songs.
+    mfcc_ = loader.load_features(mode, filename)  # Load the features dataframe of the dataset songs.
     tracks = loader.load_tracks()  # Load all the tracks of the big dataset.
     y_train, y_val, y_test = loader.get_targets(tracks)  # Load the target values of all the tracks.
     # Get training mfcc and labels dataframes.

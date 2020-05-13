@@ -17,7 +17,7 @@ def compute_feature(mode, filepath):
     :return mfcc of the data track.
     """
     if mode == 'spectrogram':
-        y, sr = librosa.load(filepath, duration=10.5, sr=44100, mono=True, offset=0.5)  # Load 10 seconds
+        y, sr = librosa.load(filepath, duration=3, sr=44100, mono=True, offset=0.5)  # Load 3 seconds
         # (same length for every track)
         stft = np.abs(librosa.stft(y, n_fft=2048, hop_length=512))
         mel = librosa.feature.melspectrogram(n_mels=64, sr=sr, S=stft ** 2)
