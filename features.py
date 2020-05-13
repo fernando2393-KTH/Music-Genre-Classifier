@@ -17,10 +17,9 @@ def compute_feature(mode, filepath):
     :return mfcc of the data track.
     """
     if mode == 'spectrogram':
-        y, sr = librosa.load(filepath, duration=3, sr=44100, mono=True, offset=0.5)  # Load 3 seconds
-        # (same length for every track)
-        stft = np.abs(librosa.stft(y, n_fft=2048, hop_length=512))
-        mel = librosa.feature.melspectrogram(n_mels=64, sr=sr, S=stft ** 2)
+        y, sr = librosa.load(filepath, duration=3.5, mono=True, offset=15.5)  # Load 10 seconds
+        stft = np.abs(librosa.stft(y, n_fft=2048, hop_length=604))
+        mel = librosa.feature.melspectrogram(n_mels=128, sr=sr, S=stft ** 2)
         log_mel = librosa.power_to_db(mel, ref=np.max)
 
         return log_mel
@@ -31,6 +30,29 @@ def compute_feature(mode, filepath):
     mfcc = sklearn.preprocessing.scale(mfcc, axis=1)  # Normalize mfcc to have mean 0 and std 1
 
     return mfcc
+
+
+def augment_feature(filepath, rate=0.8, n_steps=2.0, effect="time_stretch"):
+    """
+    This method loads the a music track and augments it.
+    :param effect: applied augmentation effect.
+    :param n_steps: steps taken.
+    :param rate: sampling rate.
+    :param filepath: music track.
+    :return mfcc of the data track.
+    """
+    y, sr = librosa.load(filepath, duration=3.5, mono=True, offset=0.5)
+
+    if effect == "time_stretch":
+        y_changed = librosa.effects.time_stretch(y, rate=rate)
+    else:
+        y_changed = librosa.effects.pitch_shift(y, sr, n_steps=n_steps)
+
+    stft = np.abs(librosa.stft(y_changed, n_fft=2048, hop_length=604))
+    mel = librosa.feature.melspectrogram(n_mels=128, sr=sr, S=stft ** 2)
+    log_mel = librosa.power_to_db(mel, ref=np.max)
+
+    return log_mel
 
 
 class FeatureComputation:
@@ -55,11 +77,17 @@ class FeatureComputation:
                 if os.path.isdir(cts.DATASETS + foldername):
                     key = file.strip('0')
                     key = key.replace('.mp3', '')
-                    feature = compute_feature(mode, cts.DATASETS + foldername + '/' + file)
-                    feature_dict[int(key)] = feature
-
+                    if cts.AUGMENT:
+                        feature = augment_feature(cts.DATASETS + foldername + '/' + file, rate=1.1,
+                                                  effect='time_stretch')
+                        feature_dict[int(key)] = feature
+                    else:
+                        feature = compute_feature(mode, cts.DATASETS + foldername + '/' + file)
+                        feature_dict[int(key)] = feature
         df = pd.DataFrame(list(feature_dict.items()), columns=['track', mode]).astype(object)
-        if mode == 'spectrogram':
+        if mode == 'spectrogram' and cts.AUGMENT:
+            df.to_pickle(cts.SPECTROGRAM_AUGMENT)
+        elif mode == 'spectrogram':
             df.to_pickle(cts.SPECTROGRAM)
         else:
             df.to_pickle(cts.MFCC)
