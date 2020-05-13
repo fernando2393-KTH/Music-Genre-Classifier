@@ -74,7 +74,7 @@ def build_model(input_shape):
     model.add(keras.layers.Dense(64, activation='relu'))
     model.add(keras.layers.Dropout(0.3))
     # output layer
-    model.add(keras.layers.Dense(10, activation='softmax'))
+    model.add(keras.layers.Dense(8, activation='softmax'))
 
     return model
 
