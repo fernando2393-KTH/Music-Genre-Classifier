@@ -39,14 +39,15 @@ def augment_feature(filepath, rate=0.8, n_steps=2.0, effect="time_stretch"):
     :param n_steps: steps taken.
     :param rate: sampling rate.
     :param filepath: music track.
-    :return mfcc of the data track.
+    :return log mel-spectogram of the data track.
     """
-    y, sr = librosa.load(filepath, duration=3.5, mono=True, offset=0.5)
+    y, sr = librosa.load(filepath, duration=3.5, mono=True, offset=21.5)
 
     if effect == "time_stretch":
         y_changed = librosa.effects.time_stretch(y, rate=rate)
-    else:
+    if effect == "pitch_shift":
         y_changed = librosa.effects.pitch_shift(y, sr, n_steps=n_steps)
+    else: y_changed = y
 
     stft = np.abs(librosa.stft(y_changed, n_fft=2048, hop_length=604))
     mel = librosa.feature.melspectrogram(n_mels=128, sr=sr, S=stft ** 2)
@@ -79,7 +80,7 @@ class FeatureComputation:
                     key = key.replace('.mp3', '')
                     if cts.AUGMENT:
                         feature = augment_feature(cts.DATASETS + foldername + '/' + file, rate=1.1,
-                                                  effect='time_stretch')
+                                                  effect=None)
                         feature_dict[int(key)] = feature
                     else:
                         feature = compute_feature(mode, cts.DATASETS + foldername + '/' + file)
