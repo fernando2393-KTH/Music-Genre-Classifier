@@ -1,8 +1,10 @@
 from loader import Loader
 import pandas as pd
 
+
 def load_features(filepath):
     return pd.read_pickle(filepath)
+
 
 def get_train_val_test(filepath):
     """
@@ -12,7 +14,7 @@ def get_train_val_test(filepath):
     mfcc_ = load_features(filepath)  # Load the features dataframe of the dataset songs.
     tracks = loader.load_tracks()  # Load all the tracks of the big dataset.
     y_train, y_val, y_test = loader.get_targets(tracks)  # Load the target values of all the tracks.
-    
+
     # Get training mfcc and labels dataframes.
     mfcc_train = mfcc_.loc[mfcc_['track'].isin(y_train.index[:].tolist())]
     y_train = y_train[mfcc_train['track'].to_numpy()]

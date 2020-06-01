@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import constants as cts
 from tensorflow.keras.utils import to_categorical
 
 
@@ -21,16 +22,12 @@ def plot_history(history):
     plt.show()
 
 
-def targets_to_categorical(categories, y_train, y_val, y_test):
-    dict_labels = {}
-    for idx, cat in enumerate(categories):
-        dict_labels[cat] = idx
-
-    y_train = [dict_labels[y_train[i]] for i in range(y_train.shape[0])]
-    y_val = [dict_labels[y_val[i]] for i in range(y_val.shape[0])]
-    y_test = [dict_labels[y_test[i]] for i in range(y_test.shape[0])]
-    y_train = to_categorical(y_train, num_classes=8)
-    y_val = to_categorical(y_val, num_classes=8)
-    y_test = to_categorical(y_test, num_classes=8)
+def targets_to_categorical(y_train, y_val, y_test):
+    y_train = [cts.dict_labels[y_train[i]] for i in range(y_train.shape[0])]
+    y_val = [cts.dict_labels[y_val[i]] for i in range(y_val.shape[0])]
+    y_test = [cts.dict_labels[y_test[i]] for i in range(y_test.shape[0])]
+    y_train = to_categorical(y_train, num_classes=len(cts.dict_labels))
+    y_val = to_categorical(y_val, num_classes=len(cts.dict_labels))
+    y_test = to_categorical(y_test, num_classes=len(cts.dict_labels))
 
     return y_train, y_val, y_test

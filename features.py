@@ -45,9 +45,10 @@ def augment_feature(filepath, rate=0.8, n_steps=2.0, effect="time_stretch"):
 
     if effect == "time_stretch":
         y_changed = librosa.effects.time_stretch(y, rate=rate)
-    if effect == "pitch_shift":
+    elif effect == "pitch_shift":
         y_changed = librosa.effects.pitch_shift(y, sr, n_steps=n_steps)
-    else: y_changed = y
+    else:
+        y_changed = y
 
     stft = np.abs(librosa.stft(y_changed, n_fft=2048, hop_length=604))
     mel = librosa.feature.melspectrogram(n_mels=128, sr=sr, S=stft ** 2)
@@ -80,7 +81,7 @@ class FeatureComputation:
                     key = key.replace('.mp3', '')
                     if cts.AUGMENT:
                         feature = augment_feature(cts.DATASETS + foldername + '/' + file, rate=1.1,
-                                                  effect=None)
+                                                  effect="")
                         feature_dict[int(key)] = feature
                     else:
                         feature = compute_feature(mode, cts.DATASETS + foldername + '/' + file)
@@ -92,4 +93,3 @@ class FeatureComputation:
             df.to_pickle(cts.SPECTROGRAM)
         else:
             df.to_pickle(cts.MFCC)
-
