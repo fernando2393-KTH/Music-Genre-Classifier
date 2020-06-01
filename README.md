@@ -8,7 +8,7 @@ configurations of convolutional neural networks, which can be found in [Models](
 
 To run the experiments:
 - Go to [base_models](base_models.py) to run the simple approaches.
-- Go to [final_models](base_models.py) to run the deep learning approaches.
+- Go to [final_models](final_models.py) to run the deep learning approaches.
 - Modify the paths in [constants](constants.py) if needed (as it is in order to run in Colab).
 - Modify the network parameters to customize the architecture and performance.
 - Run the selected code (it needs TensorFlow in its version 2 to run).
