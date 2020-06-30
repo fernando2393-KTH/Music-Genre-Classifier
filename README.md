@@ -1,4 +1,4 @@
-# DT2119 Final Project - Music Genre Classification: Different Methods Exploration
+# Music Genre Classification: Different Methods Exploration
 
 Final project of KTH course DT2119 Speech and Speaker Recognition. This project consists of 
 employing different approaches in order to perform music genre classification over the [FMA](https://github.com/mdeff/fma) dataset.
